@@ -26,25 +26,32 @@
             width: 150px;
             text-align: center;
         }
-        #table-container {
-            margin-top: 20px;
+        #score-container {
+            margin-bottom: 20px;
         }
-        .result-table {
-            margin-top: 20px;
-            width: 100%;
-            border-collapse: collapse;
+        .score {
+            display: inline-block;
+            margin-right: 20px;
         }
-        .result-table th, .result-table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: center;
+        .score span {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .score button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #result-container {
+            display: none;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
     <h2>棒球打席記錄表</h2>
+
     <!-- 比賽資訊 -->
     <form id="form">
         <div>
@@ -52,45 +59,55 @@
             <input type="date" id="match-date">
             <label>對手名稱：</label>
             <input type="text" id="opponent" placeholder="輸入對手名稱">
-            <label>比分 (我方:對方)：</label>
-            <input type="text" id="score" placeholder="例如: 5:3">
             <label>比賽地點：</label>
             <input type="text" id="venue" placeholder="輸入比賽地點">
         </div>
     </form>
 
-    <!-- 打者輸入表格 -->
-    <table>
-        <thead>
-            <tr>
-                <th>打者名字</th>
-                <th>第一打席</th>
-                <th>第二打席</th>
-                <th>第三打席</th>
-                <th>第四打席</th>
-                <th>第五打席</th>
-                <th>第六打席</th>
-            </tr>
-        </thead>
-        <tbody id="players-table-body">
-            <!-- 這裡將由 JavaScript 動態生成 -->
-        </tbody>
-    </table>
-
-    <button type="button" onclick="calculateStats()">匯出統計數據.JPG</button>
-
-    <div id="table-container">
-        <!-- 匯出的圖片會顯示在這裡 -->
+    <!-- 比分顯示與調整 -->
+    <div id="score-container">
+        <div class="score">
+            <span>我方比分：</span>
+            <span id="score-my-team">0</span>
+            <button type="button" onclick="updateScore('my', 1)">+</button>
+        </div>
+        <div class="score">
+            <span>對方比分：</span>
+            <span id="score-opponent-team">0</span>
+            <button type="button" onclick="updateScore('opponent', 1)">+</button>
+        </div>
     </div>
 
-    <div id="result-container" style="display:none;">
+    <form id="form">
+        <table>
+            <thead>
+                <tr>
+                    <th>打者名字</th>
+                    <th>第一打席</th>
+                    <th>第二打席</th>
+                    <th>第三打席</th>
+                    <th>第四打席</th>
+                    <th>第五打席</th>
+                    <th>第六打席</th>
+                </tr>
+            </thead>
+            <tbody id="players-table-body">
+                <!-- 這裡將由 JavaScript 動態生成 -->
+            </tbody>
+        </table>
+
+        <button type="button" onclick="calculateStats()">計算統計</button>
+        <button type="button" onclick="downloadImage()">匯出JPG</button>
+    </form>
+
+    <div id="result-container">
         <h3>統計結果</h3>
-        <p>
-            <strong>比賽日期：</strong><span id="display-date"></span>　
-            <strong>對手名稱：</strong><span id="display-opponent"></span>　
-            <strong>比分：</strong><span id="display-score"></span>　
-            <strong>比賽地點：</strong><span id="display-venue"></span>
-        </p>
+        <div id="match-info">
+            <p><strong>比賽日期：</strong><span id="result-match-date"></span></p>
+            <p><strong>對手名稱：</strong><span id="result-opponent"></span></p>
+            <p><strong>比賽地點：</strong><span id="result-venue"></span></p>
+            <p><strong>比分：</strong><span id="result-score"></span></p>
+        </div>
         <table class="result-table" id="result-table">
             <thead>
                 <tr>
@@ -107,12 +124,12 @@
     </div>
 
     <script>
-        // 動態生成 15 個打者的行
+        const hitOptions = ["未打擊", "1壘安", "2壘安", "3壘安", "全壘打", "四壞球", "三振", "觸身球", "失誤上壘", "接殺出局", "野手選擇"];
+
         const tableBody = document.getElementById('players-table-body');
         for (let i = 1; i <= 15; i++) {
             const row = document.createElement('tr');
 
-            // 打者名字欄位
             const nameCell = document.createElement('td');
             const nameInput = document.createElement('input');
             nameInput.type = 'text';
@@ -121,75 +138,86 @@
             nameCell.appendChild(nameInput);
             row.appendChild(nameCell);
 
-            // 生成每個打席的下拉選單
             for (let j = 1; j <= 6; j++) {
                 const cell = document.createElement('td');
                 const select = document.createElement('select');
                 select.name = `player${i}_atbat${j}`;
-                ["未打擊", "1壘安", "2壘安", "3壘安", "全壘打", "四壞球", "三振", "觸身球", "失誤上壘", "接殺出局", "野手選擇"]
-                    .forEach(option => {
-                        const optionElement = document.createElement('option');
-                        optionElement.value = option;
-                        optionElement.textContent = option;
-                        select.appendChild(optionElement);
-                    });
+                hitOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    optionElement.textContent = option;
+                    select.appendChild(optionElement);
+                });
+
                 cell.appendChild(select);
                 row.appendChild(cell);
             }
 
-            // 將該行加入到表格中
             tableBody.appendChild(row);
         }
 
-        // 計算結果並匯出為圖片
         function calculateStats() {
-            // 比賽資訊顯示
-            document.getElementById('display-date').textContent = document.getElementById('match-date').value;
-            document.getElementById('display-opponent').textContent = document.getElementById('opponent').value || "未指定";
-            document.getElementById('display-score').textContent = document.getElementById('score').value || "未提供";
-            document.getElementById('display-venue').textContent = document.getElementById('venue').value || "未指定";
-
             const resultTableBody = document.getElementById('result-table').getElementsByTagName('tbody')[0];
-            resultTableBody.innerHTML = ''; // 清空現有結果
+            resultTableBody.innerHTML = '';
 
+            const matchDate = document.getElementById('match-date').value;
+            const opponent = document.getElementById('opponent').value || "對手名稱";
+            const venue = document.getElementById('venue').value || "比賽地點";
+            const myTeamScore = document.getElementById('score-my-team').textContent;
+            const opponentScore = document.getElementById('score-opponent-team').textContent;
+            const resultScore = `${myTeamScore} - ${opponentScore}`;
+            
+            // 設定比賽資訊
+            document.getElementById('result-match-date').textContent = matchDate;
+            document.getElementById('result-opponent').textContent = opponent;
+            document.getElementById('result-venue').textContent = venue;
+            document.getElementById('result-score').textContent = resultScore;
+
+            // 計算統計並顯示
             for (let i = 1; i <= 15; i++) {
-                const nameInput = document.querySelector(`input[name="name${i}"]`);
-                const name = nameInput.value || `打者 ${i}`;
+                const playerName = document.querySelector(`input[name="name${i}"]`).value || `打者 ${i}`;
                 const atBats = [];
-
                 for (let j = 1; j <= 6; j++) {
-                    const select = document.querySelector(`select[name="player${i}_atbat${j}"]`);
-                    atBats.push(select.value);
+                    const selectedOption = document.querySelector(`select[name="player${i}_atbat${j}"]`).value;
+                    atBats.push(selectedOption);
                 }
 
-                const hits = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打"].includes(result)).length;
-                const atBatsCount = atBats.filter(result => result !== "未打擊").length;
+                // 計算 BA 和 OBP
+                let validAtBats = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打", "四壞球", "觸身球", "失誤上壘", "野手選擇"].includes(result)).length;
+                let hits = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打"].includes(result)).length;
+                let walks = atBats.filter(result => result === "四壞球").length;
+                let hitByPitch = atBats.filter(result => result === "觸身球").length;
+                let errors = atBats.filter(result => result === "失誤上壘").length;
+                let fieldersChoice = atBats.filter(result => result === "野手選擇").length;
 
-                const BA = atBatsCount ? (hits / atBatsCount).toFixed(3) : "0.000";
-                const OBP = atBatsCount ? (hits / atBatsCount).toFixed(3) : "0.000";
+                let BA = hits / validAtBats || 0;
+                let OBP = (hits + walks + hitByPitch + fieldersChoice + errors) / (validAtBats + walks + hitByPitch + fieldersChoice + errors) || 0;
 
+                // 創建一行顯示結果
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${name}</td>
-                    <td>${atBats.join(", ")}</td>
-                    <td>${BA}</td>
-                    <td>${OBP}</td>
+                    <td>${playerName}</td>
+                    <td>${atBats.join(', ')}</td>
+                    <td>${BA.toFixed(3)}</td>
+                    <td>${OBP.toFixed(3)}</td>
                 `;
                 resultTableBody.appendChild(row);
             }
 
             document.getElementById('result-container').style.display = 'block';
+        }
 
-            // 匯出為圖片
-            html2canvas(document.querySelector("#result-container")).then(function(canvas) {
-                const imgData = canvas.toDataURL("image/jpeg");
-                const link = document.createElement('a');
-                link.href = imgData;
-                link.download = 'baseball_stats.jpg';
-                link.click();
-            });
+        // 匯出成JPG（目前無法實作，只做一個提示）
+        function downloadImage() {
+            alert("匯出JPG功能尚未實作！請稍後新增功能！");
+        }
+
+        // 更新比分顯示
+        function updateScore(team, points) {
+            const scoreElement = document.getElementById(`score-${team}-team`);
+            const currentScore = parseInt(scoreElement.textContent) || 0;
+            scoreElement.textContent = currentScore + points;
         }
     </script>
-
 </body>
 </html>
