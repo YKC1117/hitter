@@ -97,6 +97,7 @@
 
         <button type="button" onclick="calculateStats()">計算統計</button>
         <button type="button" onclick="downloadImage()">匯出JPG</button>
+        <button type="button" onclick="clearData()">清除</button>
     </form>
 
     <div id="result-container">
@@ -113,7 +114,6 @@
                     <th>打者名字</th>
                     <th>打席結果</th>
                     <th>打擊率 (BA)</th>
-                    <th>上壘率 (OBP)</th>
                 </tr>
             </thead>
             <tbody>
@@ -181,20 +181,17 @@
 
                 let validAtBats = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打", "四壞球", "觸身球", "失誤上壘", "野手選擇"].includes(result)).length;
                 let hits = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打"].includes(result)).length;
-                let walks = atBats.filter(result => result === "四壞球").length;
-                let hitByPitch = atBats.filter(result => result === "觸身球").length;
-                let errors = atBats.filter(result => result === "失誤上壘").length;
-                let fieldersChoice = atBats.filter(result => result === "野手選擇").length;
+                let outs = atBats.filter(result => result === "接殺出局" || result === "三振").length;
 
-                let BA = hits / validAtBats;
-                let OBP = (hits + walks + hitByPitch + fieldersChoice + errors) / (validAtBats + walks + hitByPitch + fieldersChoice + errors);
+                // 修正後的打擊率計算
+                validAtBats -= outs;  // 排除三振和接殺出局
+                let BA = validAtBats > 0 ? hits / validAtBats : 0;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${playerName}</td>
                     <td>${atBats.join(', ')}</td>
                     <td>${BA.toFixed(3)}</td>
-                    <td>${OBP.toFixed(3)}</td>
                 `;
                 resultTableBody.appendChild(row);
             }
@@ -216,6 +213,22 @@
             const scoreElement = document.getElementById(`score-${team}-team`);
             const currentScore = scoreElement.textContent === "未得分" ? 0 : parseInt(scoreElement.textContent);
             scoreElement.textContent = currentScore + points;
+        }
+
+        function clearData() {
+            document.getElementById('match-date').value = '';
+            document.getElementById('opponent').value = '';
+            document.getElementById('venue').value = '';
+            document.getElementById('score-my-team').textContent = '未得分';
+            document.getElementById('score-opponent-team').textContent = '未得分';
+
+            const playerInputs = document.querySelectorAll('input[type="text"]');
+            playerInputs.forEach(input => input.value = '');
+
+            const selectElements = document.querySelectorAll('select');
+            selectElements.forEach(select => select.selectedIndex = 0);
+
+            document.getElementById('result-container').style.display = 'none';
         }
     </script>
 </body>
