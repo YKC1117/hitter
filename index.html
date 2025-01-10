@@ -47,6 +47,12 @@
         #result-container {
             display: none;
         }
+        .score-select {
+            background-color: white;
+        }
+        .score-select option[value="未打擊"] {
+            background-color: #d3d3d3; /* 淺灰色 */
+        }
     </style>
 </head>
 <body>
@@ -141,6 +147,7 @@
                 const cell = document.createElement('td');
                 const select = document.createElement('select');
                 select.name = `player${i}_atbat${j}`;
+                select.classList.add('score-select');  // 設定類別為score-select
                 hitOptions.forEach(option => {
                     const optionElement = document.createElement('option');
                     optionElement.value = option;
@@ -179,12 +186,12 @@
                     atBats.push(selectedOption);
                 }
 
-                let validAtBats = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打", "四壞球", "觸身球", "失誤上壘", "野手選擇"].includes(result)).length;
+                // 計算有效打席
+                let validAtBats = atBats.filter(result => !["四壞球", "觸身球", "未打擊"].includes(result)).length;
+                // 計算安打數
                 let hits = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打"].includes(result)).length;
-                let outs = atBats.filter(result => result === "接殺出局" || result === "三振").length;
 
-                // 修正後的打擊率計算
-                validAtBats -= outs;  // 排除三振和接殺出局
+                // 計算打擊率
                 let BA = validAtBats > 0 ? hits / validAtBats : 0;
 
                 const row = document.createElement('tr');
