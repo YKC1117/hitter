@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>棒球打席記錄表</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -52,7 +53,6 @@
 
     <h2>棒球打席記錄表</h2>
 
-    <!-- 比賽資訊 -->
     <form id="form">
         <div>
             <label>比賽日期：</label>
@@ -64,16 +64,15 @@
         </div>
     </form>
 
-    <!-- 比分顯示與調整 -->
     <div id="score-container">
         <div class="score">
             <span>我方比分：</span>
-            <span id="score-my-team">0</span>
+            <span id="score-my-team">未得分</span>
             <button type="button" onclick="updateScore('my', 1)">+</button>
         </div>
         <div class="score">
             <span>對方比分：</span>
-            <span id="score-opponent-team">0</span>
+            <span id="score-opponent-team">未得分</span>
             <button type="button" onclick="updateScore('opponent', 1)">+</button>
         </div>
     </div>
@@ -167,13 +166,11 @@
             const opponentScore = document.getElementById('score-opponent-team').textContent;
             const resultScore = `${myTeamScore} - ${opponentScore}`;
             
-            // 設定比賽資訊
             document.getElementById('result-match-date').textContent = matchDate;
             document.getElementById('result-opponent').textContent = opponent;
             document.getElementById('result-venue').textContent = venue;
             document.getElementById('result-score').textContent = resultScore;
 
-            // 計算統計並顯示
             for (let i = 1; i <= 15; i++) {
                 const playerName = document.querySelector(`input[name="name${i}"]`).value || `打者 ${i}`;
                 const atBats = [];
@@ -182,7 +179,6 @@
                     atBats.push(selectedOption);
                 }
 
-                // 計算 BA 和 OBP
                 let validAtBats = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打", "四壞球", "觸身球", "失誤上壘", "野手選擇"].includes(result)).length;
                 let hits = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打"].includes(result)).length;
                 let walks = atBats.filter(result => result === "四壞球").length;
@@ -190,10 +186,9 @@
                 let errors = atBats.filter(result => result === "失誤上壘").length;
                 let fieldersChoice = atBats.filter(result => result === "野手選擇").length;
 
-                let BA = hits / validAtBats || 0;
-                let OBP = (hits + walks + hitByPitch + fieldersChoice + errors) / (validAtBats + walks + hitByPitch + fieldersChoice + errors) || 0;
+                let BA = hits / validAtBats;
+                let OBP = (hits + walks + hitByPitch + fieldersChoice + errors) / (validAtBats + walks + hitByPitch + fieldersChoice + errors);
 
-                // 創建一行顯示結果
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${playerName}</td>
@@ -207,15 +202,19 @@
             document.getElementById('result-container').style.display = 'block';
         }
 
-        // 匯出成JPG（目前無法實作，只做一個提示）
         function downloadImage() {
-            alert("匯出JPG功能尚未實作！請稍後新增功能！");
+            const resultContainer = document.getElementById('result-container');
+            html2canvas(resultContainer).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '棒球打席記錄表.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 1.0);
+                link.click();
+            });
         }
 
-        // 更新比分顯示
         function updateScore(team, points) {
             const scoreElement = document.getElementById(`score-${team}-team`);
-            const currentScore = parseInt(scoreElement.textContent) || 0;
+            const currentScore = scoreElement.textContent === "未得分" ? 0 : parseInt(scoreElement.textContent);
             scoreElement.textContent = currentScore + points;
         }
     </script>
