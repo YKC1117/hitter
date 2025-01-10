@@ -50,8 +50,9 @@
         .score-select {
             background-color: white;
         }
+        /* 設定 "未打擊" 顯示為淺灰色字體 */
         .score-select option[value="未打擊"] {
-            background-color: #d3d3d3; /* 淺灰色 */
+            color: #d3d3d3; /* 淺灰色字體 */
         }
     </style>
 </head>
@@ -197,7 +198,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${playerName}</td>
-                    <td>${atBats.join(', ')}</td>
+                    <td>${atBats.map(result => result === "未打擊" ? `<span style="color: #d3d3d3;">${result}</span>` : result).join(', ')}</td>
                     <td>${BA.toFixed(3)}</td>
                 `;
                 resultTableBody.appendChild(row);
