@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -51,14 +50,12 @@
         .score-select {
             background-color: white;
         }
-        /* 設定 "未打擊" 顯示為淺灰色字體 */
         .score-select option[value="未打擊"] {
-            color: #d3d3d3; /* 淺灰色字體 */
+            color: #d3d3d3; 
         }
     </style>
 </head>
 <body>
-
     <h2>球隊-打席記錄表</h2>
 
     <form id="form">
@@ -77,11 +74,13 @@
             <span>我方比分：</span>
             <span id="score-my-team">未得分</span>
             <button type="button" onclick="updateScore('my', 1)">+</button>
+            <button type="button" onclick="updateScore('my', -1)">-</button>
         </div>
         <div class="score">
             <span>對方比分：</span>
             <span id="score-opponent-team">未得分</span>
             <button type="button" onclick="updateScore('opponent', 1)">+</button>
+            <button type="button" onclick="updateScore('opponent', -1)">-</button>
         </div>
     </div>
 
@@ -96,10 +95,12 @@
                     <th>第四打席</th>
                     <th>第五打席</th>
                     <th>第六打席</th>
+                    <th>第七打席</th>
+                    <th>第八打席</th>
                 </tr>
             </thead>
             <tbody id="players-table-body">
-                <!-- 這裡將由 JavaScript 動態生成 -->
+                
             </tbody>
         </table>
 
@@ -125,7 +126,7 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- 統計結果將在這裡顯示 -->
+                
             </tbody>
         </table>
     </div>
@@ -145,23 +146,29 @@
             nameCell.appendChild(nameInput);
             row.appendChild(nameCell);
 
-            for (let j = 1; j <= 6; j++) {
+            for (let j = 1; j <= 8; j++) {
                 const cell = document.createElement('td');
                 const select = document.createElement('select');
                 select.name = `player${i}_atbat${j}`;
-                select.classList.add('score-select');  // 設定類別為score-select
+                select.classList.add('score-select');
                 hitOptions.forEach(option => {
                     const optionElement = document.createElement('option');
                     optionElement.value = option;
                     optionElement.textContent = option;
                     select.appendChild(optionElement);
                 });
-
                 cell.appendChild(select);
                 row.appendChild(cell);
             }
 
             tableBody.appendChild(row);
+        }
+
+        function updateScore(team, points) {
+            const scoreElement = document.getElementById(`score-${team}-team`);
+            const currentScore = scoreElement.textContent === "未得分" ? 0 : parseInt(scoreElement.textContent);
+            const newScore = Math.max(0, currentScore + points);
+            scoreElement.textContent = newScore > 0 ? newScore : "未得分";
         }
 
         function calculateStats() {
@@ -174,7 +181,7 @@
             const myTeamScore = document.getElementById('score-my-team').textContent;
             const opponentScore = document.getElementById('score-opponent-team').textContent;
             const resultScore = `${myTeamScore} - ${opponentScore}`;
-            
+
             document.getElementById('result-match-date').textContent = matchDate;
             document.getElementById('result-opponent').textContent = opponent;
             document.getElementById('result-venue').textContent = venue;
@@ -183,17 +190,13 @@
             for (let i = 1; i <= 15; i++) {
                 const playerName = document.querySelector(`input[name="name${i}"]`).value || `打者 ${i}`;
                 const atBats = [];
-                for (let j = 1; j <= 6; j++) {
+                for (let j = 1; j <= 8; j++) {
                     const selectedOption = document.querySelector(`select[name="player${i}_atbat${j}"]`).value;
                     atBats.push(selectedOption);
                 }
 
-                // 計算有效打席
                 let validAtBats = atBats.filter(result => !["四壞球", "觸身球", "未打擊"].includes(result)).length;
-                // 計算安打數
                 let hits = atBats.filter(result => ["1壘安", "2壘安", "3壘安", "全壘打"].includes(result)).length;
-
-                // 計算打擊率
                 let BA = validAtBats > 0 ? hits / validAtBats : 0;
 
                 const row = document.createElement('tr');
@@ -216,12 +219,6 @@
                 link.href = canvas.toDataURL('image/jpeg', 1.0);
                 link.click();
             });
-        }
-
-        function updateScore(team, points) {
-            const scoreElement = document.getElementById(`score-${team}-team`);
-            const currentScore = scoreElement.textContent === "未得分" ? 0 : parseInt(scoreElement.textContent);
-            scoreElement.textContent = currentScore + points;
         }
 
         function clearData() {
